@@ -1,5 +1,4 @@
-"""Asynchronous helper utilities used throughout the solver."""
-
+"""Utility helpers shared across modules."""
 from __future__ import annotations
 
 import asyncio
@@ -28,7 +27,7 @@ class Stopwatch:
 
 
 @asynccontextmanager
-async def time_budget(seconds: int) -> AsyncIterator[Stopwatch]:
+def time_budget(seconds: int) -> AsyncIterator[Stopwatch]:
     """Context manager to enforce an overall time budget."""
 
     timer = Stopwatch.start()
@@ -40,7 +39,7 @@ async def time_budget(seconds: int) -> AsyncIterator[Stopwatch]:
             raise TimeoutError("Time budget exceeded")
 
 
-async def cancel_on_timeout(coro: Awaitable[object], timeout: float) -> Optional[object]:
+async def cancel_on_timeout(coro: Awaitable, timeout: float) -> Optional[object]:
     """Await a coroutine with cancellation support on timeout."""
 
     try:

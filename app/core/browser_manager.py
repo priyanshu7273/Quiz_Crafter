@@ -133,7 +133,7 @@ class BrowserManager:
 
 
 @asynccontextmanager
-async def browser_session() -> Any:
+def browser_session() -> Any:
     """Convenience async context manager returning an initialised browser manager."""
 
     manager = BrowserManager()
