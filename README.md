@@ -51,9 +51,7 @@ submission, multi-provider LLM fallbacks and robust scraping/analysis utilities.
    - `POST /solve` – receives quiz payloads.
    - `GET /healthz` – returns provider health information.
 
-
 > > > > > > > theirs
-
 ## Testing
 
 Run the automated test suite with:
