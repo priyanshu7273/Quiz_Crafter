@@ -2,7 +2,7 @@
 
 Quiz Crafter is a production-ready FastAPI service that receives quiz tasks from
 The Data Science Lab evaluation harness and solves data analysis challenges by
-combining deterministic tooling with LLM reasoning.  The service fulfils the
+combining deterministic tooling with LLM reasoning. The service fulfils the
 requirements outlined in the project brief, including defensive/offensive prompt
 submission, multi-provider LLM fallbacks and robust scraping/analysis utilities.
 
@@ -51,6 +51,9 @@ submission, multi-provider LLM fallbacks and robust scraping/analysis utilities.
    - `POST /solve` – receives quiz payloads.
    - `GET /healthz` – returns provider health information.
 
+
+> > > > > > > theirs
+
 ## Testing
 
 Run the automated test suite with:
@@ -87,11 +90,10 @@ app/
   next available provider when quota errors occur. Retry logic with exponential
   backoff handles transient HTTP issues when submitting answers.
 - **Observability** – structured logs are emitted to both stdout and a JSON log
-  file (`logs/app.log`).  These entries include metadata such as provider names,
+  file (`logs/app.log`). These entries include metadata such as provider names,
   latency and quiz URLs to aid debugging.
 - **Security** – secrets are never logged and are only compared using lowercase
-  canonicalisation.  The API immediately rejects unauthorised requests with HTTP
-  403.
+  canonicalisation. The API immediately rejects unauthorised requests with HTTP 403.
 - **Extensibility** – new parsers, analysis primitives or providers can be added
   by extending the relevant modules without touching the API layer.
 
