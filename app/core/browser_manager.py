@@ -3,7 +3,6 @@ from __future__ import annotations
 
 import asyncio
 import base64
-import binascii
 from contextlib import asynccontextmanager
 from typing import Any, Dict, Optional
 
@@ -72,23 +71,6 @@ class BrowserManager:
                 await asyncio.sleep(2)
             html = await page.content()
             text = await page.inner_text("body")
-            decoded_fragments = []
-            result_payload = await page.evaluate("""
-                () => {
-                    const resultEl = document.querySelector('#result');
-                    if (!resultEl) {
-                        return null;
-                    }
-                    const textContent = resultEl.innerText.trim();
-                    return textContent.length ? textContent : null;
-                }
-            """)
-            if isinstance(result_payload, str):
-                decoded = self._maybe_decode_base64(result_payload)
-                if decoded:
-                    decoded_fragments.append(decoded)
-            if decoded_fragments:
-                text = "\n".join([text, *decoded_fragments])
             screenshot_bytes = await page.screenshot(full_page=True)
             tables = await page.evaluate(
                 """
@@ -141,7 +123,7 @@ class BrowserManager:
             screenshot_bytes = driver.get_screenshot_as_png()
             return {
                 "html": html,
-                "text": self._append_decoded_hint(text),
+                "text": text,
                 "tables": [],
                 "links": [],
                 "screenshot": base64.b64encode(screenshot_bytes).decode("utf-8"),
@@ -149,33 +131,9 @@ class BrowserManager:
         finally:
             driver.quit()
 
-    def _maybe_decode_base64(self, payload: str) -> Optional[str]:
-        cleaned = "".join(payload.split())
-        if len(cleaned) < 16:
-            return None
-        try:
-            decoded = base64.b64decode(cleaned, validate=True)
-        except (binascii.Error, ValueError):
-            return None
-        try:
-            text = decoded.decode("utf-8").strip()
-        except UnicodeDecodeError:
-            return None
-        return text or None
-
-    def _append_decoded_hint(self, text: str) -> str:
-        fragments = []
-        for line in text.splitlines():
-            decoded = self._maybe_decode_base64(line)
-            if decoded:
-                fragments.append(decoded)
-        if fragments:
-            return "\n".join([text, *fragments])
-        return text
-
 
 @asynccontextmanager
-async def browser_session() -> Any:
+def browser_session() -> Any:
     """Convenience async context manager returning an initialised browser manager."""
 
     manager = BrowserManager()
@@ -184,7 +142,3 @@ async def browser_session() -> Any:
         yield manager
     finally:
         await manager.close()
-
-    
-    
-    

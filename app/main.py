@@ -1,9 +1,11 @@
 """FastAPI application entry point."""
 from __future__ import annotations
 
-from typing import Optional
+import asyncio
+from contextlib import asynccontextmanager
+from typing import AsyncIterator
 
-from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, Request, status
+from fastapi import BackgroundTasks, Depends, FastAPI, HTTPException, status
 
 from app.config import Settings, get_settings
 from app.core.quiz_processor import QuizProcessor
@@ -13,32 +15,25 @@ from app.utils.logger import configure_logger, log_extra
 
 logger = configure_logger(__name__)
 
-app = FastAPI(title="LLM Analysis Quiz")
+
+@asynccontextmanager
+def lifespan(app: FastAPI) -> AsyncIterator[None]:  # pragma: no cover - startup/shutdown side effects
+    processor = QuizProcessor()
+    app.state.quiz_processor = processor
+    yield
+    await processor.close()
 
 
-@app.on_event("startup")
-async def startup_event() -> None:  # pragma: no cover - startup/shutdown side effects
-    """Initialise shared resources when the application boots."""
-    app.state.quiz_processor = QuizProcessor()
-
-
-@app.on_event("shutdown")
-async def shutdown_event() -> None:  # pragma: no cover - startup/shutdown side effects
-    """Gracefully close shared resources on application shutdown."""
-    processor: Optional[QuizProcessor] = getattr(app.state, "quiz_processor", None)
-    if processor is not None:
-        await processor.close()
-
-
-def get_processor(request: Request) -> QuizProcessor:
-    processor: Optional[QuizProcessor] = getattr(request.app.state, "quiz_processor", None)
-    if processor is None:
-        raise RuntimeError("Quiz processor is not initialised")
+def get_processor(app: FastAPI = Depends()) -> QuizProcessor:
+    processor: QuizProcessor = app.state.quiz_processor
     return processor
 
 
 def get_config() -> Settings:
     return get_settings()
+
+
+app = FastAPI(title="LLM Analysis Quiz", lifespan=lifespan)
 
 
 @app.post("/solve", response_model=APIResponse)

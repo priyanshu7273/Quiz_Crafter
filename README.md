@@ -2,7 +2,7 @@
 
 Quiz Crafter is a production-ready FastAPI service that receives quiz tasks from
 The Data Science Lab evaluation harness and solves data analysis challenges by
-combining deterministic tooling with LLM reasoning.  The service fulfils the
+combining deterministic tooling with LLM reasoning. The service fulfils the
 requirements outlined in the project brief, including defensive/offensive prompt
 submission, multi-provider LLM fallbacks and robust scraping/analysis utilities.
 
@@ -51,6 +51,7 @@ submission, multi-provider LLM fallbacks and robust scraping/analysis utilities.
    - `POST /solve` – receives quiz payloads.
    - `GET /healthz` – returns provider health information.
 
+> > > > > > > theirs
 ## Testing
 
 Run the automated test suite with:
@@ -87,51 +88,12 @@ app/
   next available provider when quota errors occur. Retry logic with exponential
   backoff handles transient HTTP issues when submitting answers.
 - **Observability** – structured logs are emitted to both stdout and a JSON log
-  file (`logs/app.log`).  These entries include metadata such as provider names,
+  file (`logs/app.log`). These entries include metadata such as provider names,
   latency and quiz URLs to aid debugging.
 - **Security** – secrets are never logged and are only compared using lowercase
-  canonicalisation.  The API immediately rejects unauthorised requests with HTTP
-  403.
+  canonicalisation. The API immediately rejects unauthorised requests with HTTP 403.
 - **Extensibility** – new parsers, analysis primitives or providers can be added
   by extending the relevant modules without touching the API layer.
-
-## Updating Your Main Branch After Reviewing Changes
-
-Many contributors keep feature work on a separate branch (for example `work` or
-`feature/xyz`) and then open a pull request targeting `main`.  If GitHub shows
-“no lines changed” after the merge, the most likely explanation is that your
-local `main` branch has not been fast-forwarded yet.  You can safely align your
-local and remote `main` branches with the latest reviewed changes by running the
-following commands:
-
-```bash
-# make sure you have the latest references from origin
-git fetch origin
-
-# switch to your main branch locally
-git checkout main
-
-# fast-forward main to the newly merged commit from the feature branch
-git merge --ff-only origin/main
-
-# alternatively, if the feature branch is still local only, merge it directly
-# git merge work
-
-# push the updated main branch (only required if you have push access)
-git push origin main
-```
-
-Using `--ff-only` guarantees that `main` moves forward without creating an
-extra merge commit.  If Git reports “already up to date”, your branch already
-contains the latest changes.  You can verify the result with:
-
-```bash
-git log --oneline --decorate --graph --max-count=5
-```
-
-This snippet shows the most recent commits and the branches that reference
-them, making it easy to confirm that `main` now points to the merge you were
-expecting.
 
 ## Prompt Engineering Submission
 
