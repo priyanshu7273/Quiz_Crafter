@@ -17,13 +17,11 @@ logger = configure_logger(__name__)
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncIterator[None]:  # pragma: no cover - startup/shutdown side effects
+def lifespan(app: FastAPI) -> AsyncIterator[None]:  # pragma: no cover - startup/shutdown side effects
     processor = QuizProcessor()
     app.state.quiz_processor = processor
-    try:
-        yield
-    finally:
-        await processor.close()
+    yield
+    await processor.close()
 
 
 def get_processor(app: FastAPI = Depends()) -> QuizProcessor:
