@@ -8,8 +8,6 @@ from dataclasses import dataclass
 from datetime import timedelta
 from typing import Any, Dict, Optional
 
-import pandas as pd
-
 import aiohttp
 
 from app.config import get_settings
@@ -54,7 +52,6 @@ class QuizProcessor:
             current = QuizState(url=str(payload.url))
             last_response: Optional[SubmissionResponse] = None
             last_submission: Optional[QuizSubmission] = None
-            solution: Dict[str, Any] = {}
             async with BrowserManager() as browser:
                 while current.url:
                     remaining = timer.remaining(timedelta(seconds=self._settings.quiz_timeout_seconds))
@@ -109,15 +106,11 @@ class QuizProcessor:
         for name, download_url in downloads.items():
             content = await self._download(download_url)
             parsed = await self._solver.parser.parse(content)
-            parsed_documents[name] = self._stringify_document(parsed)
-            dataframe = self._first_table(parsed)
-            if dataframe is not None and not dataframe.empty:
+            parsed_documents[name] = parsed.text
+            if parsed.tables:
+                df = parsed.tables[0]
                 try:
-                    aggregate = await self._solver.analyzer.aggregate(
-                        dataframe,
-                        operation="sum",
-                        column=dataframe.columns[-1],
-                    )
+                    aggregate = await self._solver.analyzer.aggregate(df, operation="sum", column=df.columns[-1])
                     interim_results[f"sum_{name}"] = aggregate.value
                 except Exception as exc:
                     logger.warning(
@@ -176,69 +169,3 @@ class QuizProcessor:
         if downloads:
             logger.info("Found downloadable artefacts", extra=log_extra(count=len(downloads)))
         return downloads
-
-    def _first_table(self, parsed: Any) -> Optional[pd.DataFrame]:
-        """Extract the first tabular structure from parsed artefacts if present."""
-
-        if isinstance(parsed, pd.DataFrame):
-            return parsed
-
-        if isinstance(parsed, dict):
-            tables = parsed.get("tables")
-            if isinstance(tables, list) and tables:
-                first = tables[0]
-                dataframe = self._coerce_table(first)
-                if dataframe is not None:
-                    return dataframe
-            if "pages" in parsed and isinstance(parsed["pages"], list):
-                for page in parsed["pages"]:
-                    if isinstance(page, dict):
-                        tables = page.get("tables")
-                        if isinstance(tables, list) and tables:
-                            dataframe = self._coerce_table(tables[0])
-                            if dataframe is not None:
-                                return dataframe
-        return None
-
-    def _coerce_table(self, table: Any) -> Optional[pd.DataFrame]:
-        """Attempt to convert a generic table structure into a DataFrame."""
-
-        if isinstance(table, pd.DataFrame):
-            return table
-        if isinstance(table, list) and table:
-            first_row = table[0]
-            if isinstance(first_row, dict):
-                return pd.DataFrame(table)
-            if isinstance(first_row, (list, tuple)):
-                return pd.DataFrame(table)
-        if isinstance(table, dict):
-            headers = table.get("headers")
-            rows = table.get("rows")
-            if headers and rows:
-                return pd.DataFrame(rows, columns=headers)
-            data = table.get("data")
-            if isinstance(data, list) and data:
-                return pd.DataFrame(data)
-        return None
-
-    def _stringify_document(self, parsed: Any) -> str:
-        """Render parsed artefacts into a readable string for LLM context."""
-
-        if isinstance(parsed, pd.DataFrame):
-            return parsed.to_csv(index=False)
-        if isinstance(parsed, dict):
-            text = parsed.get("text")
-            if isinstance(text, str) and text.strip():
-                return text
-            try:
-                return json.dumps(parsed, indent=2, default=str)
-            except TypeError:
-                return str(parsed)
-        if isinstance(parsed, (list, tuple)):
-            try:
-                return json.dumps(parsed, indent=2, default=str)
-            except TypeError:
-                return str(parsed)
-        if isinstance(parsed, bytes):
-            return parsed.decode("utf-8", errors="ignore")
-        return str(parsed)
