@@ -51,16 +51,6 @@ submission, multi-provider LLM fallbacks and robust scraping/analysis utilities.
    - `POST /solve` – receives quiz payloads.
    - `GET /healthz` – returns provider health information.
 
-<<<<<<< ours 4. **Docker usage**:
-
-```bash
-docker compose up --build
-```
-
-The container installs Chromium, Tesseract OCR and Playwright so the service
-can scrape dynamic quiz content inside the sandboxed environment.
-
-=======
 
 > > > > > > > theirs
 
